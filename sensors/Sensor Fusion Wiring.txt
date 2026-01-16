@@ -1,0 +1,27 @@
+AMG8833:
+	VIN: RED Wire to BreadBoard Power
+	GND: BLACK Wire to BreadBoard GND
+	SCL: BLUE Wire to GPIO 26
+	SDA: WHITE Wire to GPIO 27
+	INT: ~NIL~
+	ADO: ~NIL~
+
+IR Flame Sensor:
+	VIN: RED Wire to BreadBoard Power
+	GND: BLACK Wire to BreadBoard GND
+	DO: BLUE Wire to GPIO 25
+
+Smoke and Gas Sensor:
+	VIN: RED Wire to BreadBoard BreadBoard Power 5v
+	GND: BLACK Wire to BreadBoard GND
+	AO: BLUE Wire to GPIO 34
+	DO: ~NIL~
+
+ESP32 Output Format:
+F,frame_id,timestamp_ms,flame,mq135_voltage,t0,...,t63
+
+MQ135 Conversion Snippet:
+  int raw = analogRead(MQ135_PIN);
+  float adc_voltage = raw * (3.3 / 4095.0);
+  float mq135_voltage = adc_voltage * ((R1 + R2) / R2);    // 0–5V at sensor
+  float smoke_index = (mq135_voltage / 5.0) * 100.0;       // 1–100%
