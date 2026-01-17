@@ -14,11 +14,11 @@ This project in accordance to the completion of my computer science degree at Sh
 ```api.py```: used to convert the parsed json into an api endpoint.
 
 ## Todo List:
-- [x] Collect Datasets.
-- [x] Train the model using the collected dataset.
-- [x] Combine the sensors to send data properly as a CSV.
-- [x] Turn that CSV into a JSON format and then Stream it as an API.
-- [] Structure the backend and parse the camera input for the model usage.
-- [] Create a front end to show all the sensor data and camera input in a single clean dashboard.
-- [] Dockerize the whole project.
-- [] Optimize and host the project onto a Raspberry pi 5.
+[x] Collect Datasets.
+[x] Train the model using the collected dataset.
+[x] Combine the sensors to send data properly as a CSV.
+[x] Turn that CSV into a JSON format and then Stream it as an API.
+[] Structure the backend and parse the camera input for the model usage.
+[] Create a front end to show all the sensor data and camera input in a single clean dashboard.
+[] Dockerize the whole project.
+[] Optimize and host the project onto a Raspberry pi 5.
