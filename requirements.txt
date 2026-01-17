@@ -1,8 +1,14 @@
-# Core Packages:
+# Packages currently in use:
+ultralytics
+fastapi
+uvicorn
+pydantic
+requests
+pyserial
 
+# Core Packages:
 #torch - Library turned into a comment as I use an AMD GPU (RX 9060 XT).
 #torchvision - to have it be compatible with my AMD GPU, i will install these libraries through ```pip3 install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/rocm7.0```
-ultralytics
 opencv-python
 numpy
 pandas
@@ -10,7 +16,6 @@ matplotlib
 seaborn
 scikit-learn
 labelImg
-requests
 pillow
 
 # Optional Packages:
@@ -18,11 +23,6 @@ tqdm
 pyyaml
 onnx
 onnxruntime
-pyserial
 flask
-fastapi
-uvicorn
 firebase_admin
 pymongo
-requests
-pydantic
