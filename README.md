@@ -3,7 +3,6 @@
 This project in accordance to the completion of my computer science degree at Shah Abdul Latif University, Khairpur. This project is based on the YOLOv8 model combined with sensors like AMG8833, Flame IR Sensor and MQ-135 for the detection of threats, Smoke, Fire and Weapons. Furthermore, This project will be optimized to run on a Raspberry Pi 5 to serve as personal surveillance system.
 
 ## File Structure:
-
 ```/Models```: houses all the trained models (both pytorch versions and the ONNX versions).
 
 ### sensors directory:
