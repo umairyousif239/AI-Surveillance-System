@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI(title="AI Surveillance Backend")
+app = FastAPI(title="AI Surveillance Sensor Frame API")
 
 class SensorFrame(BaseModel):
     frame_id: int
