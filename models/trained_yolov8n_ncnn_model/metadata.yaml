@@ -1,0 +1,39 @@
+description: Ultralytics trained_YOLOv8n model trained on /root/datasets/master_yolov8/data.yaml
+author: Ultralytics
+date: '2026-01-20T03:47:53.783674'
+version: 8.4.2
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: NonViolence
+  1: Violence
+  2: smoke
+  3: fire
+  4: Fighting_Intrusion
+  5: burglary
+  6: crawling
+  7: fence_crossing
+  8: stealing
+  9: tampering
+  10: Unknown_Weapon_0
+  11: Grenade
+  12: Gun
+  13: Knife
+  14: Missile
+  15: Pistol
+  16: hand
+  17: handgun
+  18: heavyweapon
+  19: pistol_c
+  20: pistol_m
+  21: rifle
+args:
+  batch: 1
+  half: false
+channels: 3

@@ -5,12 +5,13 @@ uvicorn
 pydantic
 requests
 pyserial
+numpy
+opencv-python
+openvino-dev[onnx] # will be changed to onnxruntime-lite for deployment on edge devices
 
 # Core Packages:
 #torch - Library turned into a comment as I use an AMD GPU (RX 9060 XT).
 #torchvision - to have it be compatible with my AMD GPU, i will install these libraries through ```pip3 install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/rocm7.0```
-opencv-python
-numpy
 pandas
 matplotlib
 seaborn
@@ -22,7 +23,6 @@ pillow
 tqdm
 pyyaml
 onnx
-onnxruntime
 flask
 firebase_admin
 pymongo

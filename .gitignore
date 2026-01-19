@@ -5,3 +5,4 @@ __pycache__/
 .fyp_venv/
 fyp_venv/
 models/model_conversion.py
+runs/
