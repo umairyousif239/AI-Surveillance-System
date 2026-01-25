@@ -1,49 +1,25 @@
-import time
-import uuid
-from backend.modules.alert_config import *
+from fastapi import FastAPI
+from backend.modules.alerts_engine import evaluate_alerts
 
-def evaluate_alerts(sensor_data, vision_data):
-    """
-    sensor_data:
-      flame, mq135_raw, thermal_pixels
+app = FastAPI()
 
-    vision_data:
-      fire_conf, smoke_conf
-    """
+latest_alert = None
 
-    triggers = []
-    confidence = 0.0
+@app.post("/alerts/evaluate")
+def evaluate(payload: dict):
+    global latest_alert
 
-    # ---- Vision ----
-    if vision_data.get("fire_conf", 0) > VISION_FIRE_CONF:
-        triggers.append("vision")
-        confidence += vision_data["fire_conf"]
+    sensor_data = payload["sensor"]
+    vision_data = payload["vision"]
 
-    # ---- Flame IR ----
-    if sensor_data["flame"] == FLAME_DETECTED:
-        triggers.append("flame")
-        confidence += 0.4
+    alert = evaluate_alerts(sensor_data, vision_data)
 
-    # ---- Gas ----
-    if sensor_data["mq135_raw"] > MQ135_SMOKE_RAW:
-        triggers.append("gas")
-        confidence += 0.3
+    if alert:
+        latest_alert = alert
+        return {"status": "ALERT", "alert": alert}
 
-    # ---- Thermal ----
-    thermal = sensor_data["thermal"]
-    if max(thermal) > THERMAL_FIRE_TEMP:
-        triggers.append("thermal")
-        confidence += 0.4
+    return {"status": "OK"}
 
-    if len(triggers) >= 2:
-        return {
-            "alert_id": str(uuid.uuid4()),
-            "timestamp": time.time(),
-            "type": "FIRE",
-            "severity": "HIGH" if confidence > 1.2 else "MEDIUM",
-            "confidence": round(min(confidence, 1.0), 2),
-            "sources": triggers,
-            "frame_id": sensor_data["frame_id"]
-        }
-
-    return None
+@app.get("/alerts/latest")
+def get_latest():
+    return latest_alert or {"status": "NO_ALERT"}
