@@ -13,7 +13,7 @@ This project in accordance to the completion of my computer science degree at Sh
 ```bridge.py```:  code used to parse the csv data from the sensor fusion into a json for FastAPI.
 ```api.py```: used to convert the parsed json into an api endpoint.
 
-## Todo List:
+## To-do List:
 - [x] Collect Datasets.
 - [x] Train the model using the collected dataset.
 - [x] Combine the sensors to send data properly as a CSV.
