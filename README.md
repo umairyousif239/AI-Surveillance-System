@@ -26,3 +26,44 @@ This project in accordance to the completion of my computer science degree at Sh
 - [ ] Create a front end to show all the sensor data and camera input in a single clean dashboard.
 - [ ] Dockerize the whole project.
 - [ ] Optimize and host the project onto a Raspberry pi 5.
+
+## Directory Structure:
+```
+├── .devcontainer
+│   └── devcontainer.json
+├── ai_module
+├── backend
+│   ├── api
+│   │   ├── alerts.py
+│   │   ├── sensors.py
+│   │   └── vision.py
+│   ├── bridge
+│   │   └── serial_bridge.py
+│   ├── modules
+│   │   ├── alert_config.py
+│   │   └── alerts_engine.py
+│   ├── app.py
+│   └── dummy_data.py
+├── models
+│   ├── trained_yolov8n_ncnn_model
+│   │   ├── metadata.yaml
+│   │   ├── model.ncnn.bin
+│   │   ├── model.ncnn.param
+│   │   └── model_ncnn.py
+│   ├── trained_yolov8n_openvino_model
+│   │   ├── metadata.yaml
+│   │   ├── trained_yolov8n.bin
+│   │   └── trained_yolov8n.xml
+│   ├── trained_yolov8n.onnx
+│   ├── trained_yolov8n.pt
+│   ├── trained_yolov8s.onnx
+│   └── trained_yolov8s.pt
+├── sensors
+│   ├── AMG_MQ_IR
+│   │   └── AMG_MQ_IR.ino
+│   └── Sensor Fusion Wiring.txt
+├── .gitignore
+├── README.md
+├── main.py
+└── requirements.txt
+```
