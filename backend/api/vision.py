@@ -14,6 +14,7 @@ CONF_THRESH = 0.25
 # Global Variables
 latest_detections = None
 frame_id = 0
+detections_lock = threading.Lock()
 
 # Webcam + shared frame
 cap = None
@@ -66,13 +67,14 @@ def capture_loop():
             print("Inference failed:", e)
             annotated_frame = frame
 
-        frame_id += 1
+        frame_id = (frame_id + 1) % 1_000_000
 
-        latest_detections = {
-            "frame_id": frame_id,
-            "timestamp_ms": int(time.time() * 1000),
-            "detections": detections
-        }
+        with detections_lock:
+            latest_detections = {
+                "frame_id": frame_id,
+                "timestamp_ms": int(time.time() * 1000),
+                "detections": detections
+            }
 
         curr_time = time.time()
         fps = 1 / max(curr_time - prev_time, 1e-5)
@@ -134,6 +136,7 @@ async def health():
 # Expose detections via API
 @router.get("/detections/latest")
 def get_latest_detections():
-    if latest_detections is None:
-        return {"status": "no_detections"}
-    return latest_detections
+    with detections_lock:
+        if latest_detections is None:
+            return {"status": "no_detections"}
+        return latest_detections
