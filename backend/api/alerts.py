@@ -1,32 +1,7 @@
 from fastapi import APIRouter
-from backend.modules.alerts_engine import evaluate_alerts
+from backend.modules.alert_loop import latest_alert
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
-
-latest_alert = None
-
-
-@router.get("/evaluate")
-def evaluate():
-    """
-    Triggers alert evaluation.
-    Pulls vision + sensor data internally.
-    """
-    global latest_alert
-
-    alert = evaluate_alerts()
-
-    if alert:
-        latest_alert = alert
-        return {
-            "status": "ALERT",
-            "alert": alert
-        }
-
-    return {
-        "status": "OK"
-    }
-
 
 @router.get("/latest")
 def get_latest():

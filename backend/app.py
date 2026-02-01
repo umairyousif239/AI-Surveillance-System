@@ -1,20 +1,22 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+import asyncio
 
 from backend.api.vision import router as vision_router
 from backend.api.alerts import router as alerts_router
 from backend.api.sensors import router as sensors_router
-from backend.modules.alert_loop import start_alert_loop
+from backend.modules.alert_loop import alert_loop
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    start_alert_loop()
+    task = asyncio.create_task(alert_loop())
     print("✅ Alert evaluation loop started")
 
     yield  # App runs here
 
     # Shutdown (optional cleanup)
+    task.cancel()
     print("🛑 Shutting down backend")
 
 app = FastAPI(
@@ -38,5 +40,6 @@ app.include_router(alerts_router)
 def root():
     return {
         "status": "running",
-        "services": ["vision", "sensors", "alerts"]
+        "services": ["vision", "sensors", "alerts"],
+        "alerts_mode": "background"
     }
