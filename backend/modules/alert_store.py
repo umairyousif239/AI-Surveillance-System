@@ -2,7 +2,7 @@ import sqlite3
 import json
 from typing import Optional
 
-DB_PATH = "alerts.db"
+DB_PATH = "backend/database/alerts.db"
 
 def get_connection():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -21,7 +21,7 @@ def init_db():
             status TEXT,
             created_at INTEGER,
             updated_at INTEGER,
-            resolved_AT INTEGER,
+            resolved_at INTEGER,
             signals TEXT
         )
     """)
@@ -53,10 +53,10 @@ def upsert_alert(alert: dict):
         str(alert["severity"]), 
         alert["confidence"], 
         str(alert["status"]), 
-        alert["created_at"], 
-        alert["updated_at"], 
-        alert["resolved_at"], 
-        json.dump(alert["signals"]),
+        alert.get("created_at"),
+        alert.get("updated_at"),
+        alert.get("resolved_at"),
+        json.dumps(alert["signals"]),
     ))
     
     conn.commit()
@@ -91,5 +91,5 @@ def load_active_alert() -> Optional[dict]:
         "created_at": row[6],
         "updated_at": row[7],
         "resolved_at": row[8],
-        "signals": json.load(row[9]),
+        "signals": json.loads(row[9]),
     }
