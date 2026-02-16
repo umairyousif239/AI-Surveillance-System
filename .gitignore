@@ -7,3 +7,4 @@ __pycache__/
 fyp_venv/
 models/model_conversion.py
 runs/
+data/
