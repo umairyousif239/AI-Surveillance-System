@@ -36,8 +36,9 @@ npm run dev
 - [x] Combine the camera and sensor data as a proper backend.
 - [x] Add in a proper database for alerts and data storage.
 - [x] Create a front end to show all the sensor data and camera input in a single clean dashboard.
-- [ ] have the frontend show visuals from the camera and the thermal sensor.
-- [ ] fix the vision detection issue where the detections don't appear on the frontend.
+- [ ] Have the frontend show visuals from the camera and the thermal sensor.
+- [ ] Fix the vision detection issue where the detections don't appear on the frontend.
+- [ ] Fix the where the history doesn't appear on the frontend.
 - [ ] Add Authentication to the project
 - [ ] Dockerize the whole project.
 - [ ] Optimize and host the project onto a Raspberry pi 5.
