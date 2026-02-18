@@ -135,8 +135,28 @@ async def health():
 
 # Expose detections via API
 @router.get("/latest")
-def get_latest_detections():
+def get_latest():
     with detections_lock:
         if latest_detections is None:
-            return {"status": "no_detections"}
-        return latest_detections
+            return {
+                "detected": False,
+                "confidence": 0.0,
+                "timestamp": None
+            }
+
+        detections = latest_detections["detections"]
+
+        fire = [
+            d for d in detections
+            if d["class"].lower() == "fire"
+        ]
+
+        return {
+            "detected": len(fire) > 0,
+            "confidence": max(
+                [d["confidence"] for d in fire],
+                default=0.0
+            ),
+            "timestamp": latest_detections["timestamp_ms"]
+        }
+
