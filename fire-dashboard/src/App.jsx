@@ -124,13 +124,17 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-8">
       <h1 className="text-3xl font-bold mb-10">
-        🔥 AI Fire and Smoke Surveillence System
+        🔥 Fire Detection Dashboard
       </h1>
 
+      {/* ================= NEW GRID LAYOUT ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* ================= LIVE CAMERA (BIG) ================= */}
-        <Card title="Live Camera" className="lg:col-span-2">
+        {/* ========== LIVE CAMERA (LEFT SIDE, 2 ROWS) ========== */}
+        <Card
+          title="Live Camera"
+          className="lg:col-span-2 lg:row-span-2"
+        >
           <img
             src={`${API}/vision/video_feed`}
             alt="Live Feed"
@@ -138,7 +142,18 @@ export default function App() {
           />
         </Card>
 
-        {/* ================= VISION ================= */}
+        {/* ========== THERMAL (TOP RIGHT) ========== */}
+        <Card title="Thermal Camera (8x8)">
+          {sensor?.thermal ? (
+            <div className="flex justify-center">
+              <ThermalGrid data={sensor.thermal} />
+            </div>
+          ) : (
+            <p>No thermal data</p>
+          )}
+        </Card>
+
+        {/* ========== VISION (BOTTOM RIGHT) ========== */}
         <Card
           title="Vision AI"
           className={
@@ -173,35 +188,20 @@ export default function App() {
           )}
         </Card>
 
-        {/* ================= THERMAL ================= */}
-        <Card title="Thermal Camera (8x8)">
-          {sensor?.thermal ? (
-            <div className="flex justify-center">
-              <ThermalGrid data={sensor.thermal} />
-            </div>
-          ) : (
-            <p>No thermal data</p>
-          )}
-        </Card>
-
-        {/* ================= SENSORS ================= */}
+        {/* ========== SENSORS ========== */}
         <Card title="Sensors">
           {sensor ? (
             <div className="space-y-3">
               <p>
-                Flame:{" "}
-                {sensor.flame ? "🔥 DETECTED" : "No flame"}
+                Flame: {sensor.flame ? "🔥 DETECTED" : "No flame"}
               </p>
-
               <p>MQ135: {sensor.mq135_raw}</p>
-
               <p>
                 Thermal Max:{" "}
                 {sensor.thermal
                   ? Math.max(...sensor.thermal).toFixed(2)
                   : "N/A"}
               </p>
-
               <p>
                 Updated:{" "}
                 <Freshness timestamp={sensor.timestamp} />
@@ -212,7 +212,7 @@ export default function App() {
           )}
         </Card>
 
-        {/* ================= CURRENT ALERT ================= */}
+        {/* ========== CURRENT ALERT ========== */}
         <Card
           title="Current Alert"
           className={
@@ -237,7 +237,7 @@ export default function App() {
           )}
         </Card>
 
-        {/* ================= ALERT HISTORY ================= */}
+        {/* ========== ALERT HISTORY ========== */}
         <Card title="Alert History">
           {history.length > 0 ? (
             <ul className="space-y-2 text-sm">
