@@ -2,7 +2,7 @@ import time
 import jwt
 import bcrypt
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from backend.modules.auth_store import get_user_from_db
@@ -35,14 +35,20 @@ def create_access_token(data:dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# Database
-
-MOCK_USER_DB = {
-    "admin": {
-        "username": "admin",
-        "hashed_password": get_password_hash("fyp2026")
-    }
-}
+def get_current_user_from_query(token: str = Query(...)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials (Video Stream)",
+    )
+    try:
+        # crack open the token from the url to see if its valid
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        return username
+    except jwt.PyJWTError:
+        raise credentials_exception
 
 # Login Endpoint
 @router.post("/login")
@@ -63,7 +69,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
 # The Bouncer Dependency
 # Used to protect the other api endpoints
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

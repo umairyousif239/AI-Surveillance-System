@@ -290,7 +290,7 @@ export default function App() {
           className="lg:col-span-2 lg:row-span-2"
         >
           <img
-            src={`${API}/vision/video_feed`}
+            src={`${API}/vision/video_feed?token=${token}`}
             alt="Live Feed"
             className="rounded-xl w-full border border-gray-700"
           />

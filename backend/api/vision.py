@@ -6,7 +6,7 @@ import threading
 import time
 import asyncio
 
-from backend.api.login import get_current_user
+from backend.api.login import get_current_user, get_current_user_from_query
 
 # Load NCNN model
 model = YOLO("models/trained_yolov8n_ncnn_model", task="detect")  # NCNN model folder
@@ -126,9 +126,11 @@ async def mjpeg_generator():
 router = APIRouter(prefix="/vision", tags=["Vision"])
 
 @router.get("/video_feed")
-async def video_feed():
-    return StreamingResponse(mjpeg_generator(),
-                             media_type='multipart/x-mixed-replace; boundary=frame')
+async def video_feed(username: str = Depends(get_current_user_from_query)):
+    return StreamingResponse(
+        mjpeg_generator(),
+        media_type='multipart/x-mixed-replace; boundary=frame'
+    )
 
 # Optional health endpoint
 @router.get("/health")
