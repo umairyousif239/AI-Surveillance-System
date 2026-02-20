@@ -125,13 +125,13 @@ async def mjpeg_generator():
 # FastAPI app
 router = APIRouter(prefix="/vision", tags=["Vision"])
 
-@router.get("/video_feed", dependencies=[Depends(get_current_user)])
+@router.get("/video_feed")
 async def video_feed():
     return StreamingResponse(mjpeg_generator(),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 # Optional health endpoint
-@router.get("/health", dependencies=[Depends(get_current_user)])
+@router.get("/health")
 async def health():
     return {"status": "ok", "fps": "check visually on /video_feed"}
 

@@ -17,7 +17,7 @@ class SensorFrame(BaseModel):
     mq135_raw: int
     thermal: List[float] = Field(..., min_length=64, max_length=64)
 
-@router.post("/sensor-frame", dependencies=[Depends(get_current_user)])
+@router.post("/sensor-frame")
 def receive_sensor_frame(frame: SensorFrame):
     global latest_frame
     with lock:

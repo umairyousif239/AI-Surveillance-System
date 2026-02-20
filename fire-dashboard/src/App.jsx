@@ -135,51 +135,152 @@ function ConfidenceBar({ value }) {
     </div>
   );
 }
+/* ================= LOGIN COMPONENTS ================= */
+
+function Login ({ setToken }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    // FastAPI's OAuth2 auth strictly requires form data, not JSON!
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    try {
+      const response = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // securely vault the token and update the app state
+        localStorage.setItem("token", data.access_token);
+        setToken(data.access_token);
+      } else {
+        setError(data.detail || "Invalid credentials");
+      }
+    } catch {
+      setError("Cannot connect to server. Check the FastAPI status.");
+    }
+  };
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 font-sans text-gray-100">
+      <Card title="System Login" className="w-full max-w-md border-gray-700 bg-gray-800">
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Admin Username</label>
+            <input 
+              type="text" 
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              required 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              required 
+            />
+          </div>
+          
+          {error && <p className="text-red-400 text-sm font-medium bg-red-900/20 p-2 rounded">{error}</p>}
+          
+          <button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all mt-2 shadow-lg shadow-blue-900/20"
+          >
+            Authenticate
+          </button>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
 
 /* ================= MAIN APP ================= */
 
 export default function App() {
+  // check local storage for saved token on boot
+  const [token, setToken] = useState(localStorage.getItem("token"));
+
   const [sensor, setSensor] = useState(null);
   const [vision, setVision] = useState(null);
   const [alert, setAlert] = useState(null);
   const [history, setHistory] = useState([]);
 
+  // kicks user out and deletes token on logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+  };
+
   useEffect(() => {
+    if (!token) return; // stop fetching data if user logs out
+
     const fetchData = () => {
-      fetch(`${API}/sensors/latest`)
-        .then(r => r.json())
-        .then(setSensor)
-        .catch(() => setSensor(null));
+      // Creating the VIP pass Header
+      const headers = { "Authorization": `Bearer ${token}` };
 
-      fetch(`${API}/vision/latest`)
-        .then(r => r.json())
-        .then(setVision)
-        .catch(() => setVision(null));
-
-      fetch(`${API}/alerts/latest`)
-        .then(r => r.json())
-        .then(setAlert)
-        .catch(() => setAlert(null));
-
-      fetch(`${API}/alerts/history`)
-        .then(r => r.json())
-        .then(setHistory)
-        .catch(() => setHistory([]));
+      // helper function to attach headers and catch expired tokens
+      const fetchWithAuth = (url, setter) => {
+        fetch(url, { headers })
+        .then(res => {
+          if (res.status === 401) {
+            handleLogout();
+            throw new Error("Unauthorized");
+          }
+          return res.json();
+        })
+        .then(setter)
+        .catch(() => setter(null));
+      };
+      fetchWithAuth(`${API}/sensors/latest`, setSensor);
+      fetchWithAuth(`${API}/vision/latest`, setVision);
+      fetchWithAuth(`${API}/alerts/latest`, setAlert);
+      fetchWithAuth(`${API}/alerts/history`, setHistory);
     };
 
     fetchData();
     const interval = setInterval(fetchData, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [token]); // react re-runs this loop whenever the token changes
+
+  // The Gatekeeper: if there is no token, show the logic screen
+  if (!token) {
+    return <Login setToken={setToken} />;
+  }
 
   const fireActive = vision?.detected;
   const alertActive = alert && (alert.status === "NEW" || alert.status === "ACTIVE" || alert.status === "AlertStatus.NEW" || alert.status === "AlertStatus.ACTIVE");
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-10">
-        🔥 AI Fire and Smoke Surveillance System
-      </h1>
+      {/* Header with Logout Button */}
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-3xl font-bold">
+          🔥 AI Fire and Smoke Surveillance System
+        </h1>
+        <button 
+          onClick={handleLogout} 
+          className="bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg font-bold text-sm transition-colors border border-red-500"
+        >
+          Logout
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
