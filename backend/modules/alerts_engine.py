@@ -22,6 +22,10 @@ last_trigger_time = 0
 PERSISTENCE_SECONDS = 5 #Alert must persist to ensure its not a false positive
 RESOLVE_TIMEOUT = 10 # Seconds without trigger results in resolved status
 
+# Rate of Rise Memory
+last_max_temp_val = None
+last_temp_time_val = None
+
 # Scoring Functions
 def compute_confidence(
     fire: bool,
@@ -60,7 +64,7 @@ def evaluate_alerts() -> Optional[dict]:
     Manages alert lifecycle
     """
 
-    global current_alert, last_trigger_time
+    global current_alert, last_trigger_time, last_max_temp_val, last_temp_time_val
 
     vision = fetch_latest_vision()
     sensors = fetch_latest_sensors()
@@ -92,6 +96,23 @@ def evaluate_alerts() -> Optional[dict]:
     max_temp = max(thermal)
     min_temp = min(thermal)
     delta_temp = max_temp - min_temp
+    
+    # Rate of Rise Math
+    thermal_ror = False
+    if last_max_temp_val is not None and last_temp_time_val is not None:
+        dt = max_temp - last_max_temp_val
+        time_diff = now - last_temp_time_val
+        
+        if time_diff > 0:
+            rate_of_rise = dt / time_diff
+            # Trigger if temp jumps more than 2.0 celsius per second
+            if rate_of_rise > 2.0:
+                thermal_ror = True
+                print(f"Rate of Rise SPIKE DETECTED: +{rate_of_rise:.1f}°C/s")
+                
+    # save the current state for the next frame's math
+    last_max_temp_val = max_temp
+    last_temp_time_val = now
 
     smoke_detected = mq135 >= MQ135_SMOKE_RAW
     flame_detected = flame == FLAME_DETECTED
@@ -105,7 +126,7 @@ def evaluate_alerts() -> Optional[dict]:
         source = "FUSED"
     elif fire_detected:
         source = "VISION_ONLY"
-    elif smoke_detected or flame_detected or thermal_fire:
+    elif smoke_detected or flame_detected or thermal_fire or thermal_ror:
         source = "SENSOR_ONLY"
     else:
         source = "UNKNOWN"
@@ -114,9 +135,11 @@ def evaluate_alerts() -> Optional[dict]:
     # Trigger Logic
     # -----------------------------
     trigger = (
-        fire_detected and (smoke_detected or flame_detected or thermal_fire)
+        fire_detected and (smoke_detected or flame_detected or thermal_fire or thermal_ror)
     ) or (
-        smoke_detected and thermal_spike
+        smoke_detected and (thermal_spike or thermal_ror)
+    ) or (
+        thermal_ror
     ) or (
         smoke_detected
     )
@@ -165,6 +188,7 @@ def evaluate_alerts() -> Optional[dict]:
                 "max_temp": round(max_temp, 1),
                 "delta_temp": round(delta_temp, 1),
                 "mq135_raw": mq135,
+                "thermal_ror": thermal_ror,
             },
         }
 

@@ -403,6 +403,11 @@ export default function App() {
                     {(alert.signals.max_temp >= 50 || alert.signals.delta_temp >= 15) && 
                       <span className="bg-gray-700 px-2 py-1 rounded text-pink-300">🌡️ Thermal Spike</span>
                     }
+
+                    {/* The Rate of Rise Badge*/}
+                    {alert.signals.thermal_ror &&
+                      <span className="bg-gray-700 px-2 py-1 rounded text-purple-300 border border-purple-500">📈 Rapid Heat Spike</span>
+                    }
                   </div>
                 </div>
               )}
