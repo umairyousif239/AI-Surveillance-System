@@ -144,23 +144,27 @@ def get_latest():
         if latest_detections is None:
             return {
                 "detected": False,
-                "confidence": 0.0,
+                "fire_confidence": 0.0,
+                "smoke_confidence": 0.0,
                 "timestamp": None
             }
 
+        # safely copy data out of the thread lock
         detections = latest_detections["detections"]
-
-        fire = [
-            d for d in detections
-            if d["class"].lower() == "fire"
-        ]
+        timestamp = latest_detections["timestamp_ms"]
+        
+        # Filter the detections by class name
+        fire = [d for d in detections if d ["class"].lower() == "fire"]
+        smoke = [d for d in detections if d ["class"].lower() == "smoke"]
+        
+        # find the highest confidence score for each threat
+        fire_conf = max([d["confidence"] for d in fire], default=0.0)
+        smoke_conf = max([d["confidence"] for d in smoke], default=0.0)
 
         return {
-            "detected": len(fire) > 0,
-            "confidence": max(
-                [d["confidence"] for d in fire],
-                default=0.0
-            ),
-            "timestamp": latest_detections["timestamp_ms"]
+            "detected": (fire_conf > 0 or smoke_conf > 0),
+            "fire_confidence": fire_conf,
+            "smoke_confidence": smoke_conf,
+            "timestamp": timestamp
         }
 

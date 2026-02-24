@@ -117,13 +117,13 @@ function ThermalGrid({ data }) {
 
 /* ================= CONFIDENCE BAR ================= */
 
-function ConfidenceBar({ value }) {
+function ConfidenceBar({ value, label = "Confidence" }) {
   const percentage = Math.min(Math.max(value * 100, 0), 100);
 
   return (
     <div className="w-full">
       <div className="flex justify-between text-sm mb-1">
-        <span>Confidence</span>
+        <span>{label}</span>
         <span>{percentage.toFixed(1)}%</span>
       </div>
 
@@ -285,6 +285,23 @@ export default function App() {
     return <Login setToken={setToken} />;
   }
 
+  const fireConf = vision?.fire_confidence || 0;
+  const smokeConf = vision?.smoke_confidence || 0;
+
+  let visionStatusText = "Detection: None";
+  let visionStatusColor = "text-white-400";
+
+  if (fireConf > 0 && smokeConf > 0) {
+    visionStatusText = "🔥 Fire & 💨 Smoke Detected!";
+    visionStatusColor = "text-red-400 font-bold animate-pulse";
+  } else if (fireConf > 0) {
+    visionStatusText = "🔥 Fire Detected!";
+    visionStatusColor = "text-red-400 font-bold animate-pulse";
+  } else if (smokeConf > 0) {
+    visionStatusText = "💨 Smoke Detected!";
+    visionStatusColor = "text-gray-300 font-bold animate-pulse";
+  }
+
   const fireActive = vision?.detected;
   const alertActive = ["NEW", "ACTIVE", "AlertStatus.NEW", "AlertStatus.ACTIVE"].includes(alert?.status)
 
@@ -330,7 +347,7 @@ export default function App() {
         <Card
           title="Vision AI"
           className={
-            fireActive
+            fireConf > 0 || smokeConf > 0
               ? "border-2 border-red-500 shadow-red-500/30"
               : ""
           }
@@ -338,14 +355,15 @@ export default function App() {
           {vision ? (
             <div className="space-y-4">
 
+              {/* The new dynamic status toggle */}
               <p className="text-lg">
-                Fire Detected:{" "}
-                <span className={fireActive ? "text-red-400 font-bold" : ""}>
-                  {fireActive ? "🔥 YES" : "No"}
+                <span className={visionStatusColor}>
+                  {visionStatusText}
                 </span>
               </p>
 
-              <ConfidenceBar value={vision.confidence || 0} />
+              <ConfidenceBar value={vision.fire_confidence || 0} label="Fire Confidence" />
+              <ConfidenceBar value={vision.smoke_confidence || 0} label="Smoke Confidence" />
 
               <p>
                 Updated:{" "}
