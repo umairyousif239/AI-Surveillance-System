@@ -9,21 +9,21 @@ This project is made in accordance to the completion of my computer science degr
     * **Asynchronous Video Processing:** Employs a dedicated background capture thread (```capture_loop```) isolated with ```threading.Lock()``` to ensure heavy AI inference does not 
     * **Live MJPEG Streaming:** Converts annotated OpenCV frames into a low-latency MJPEG byte stream, allowing real-time video monitoring in the browser.
 2. Continuous Multi-Sensor Data Fusion (```alert_engine.py```)
-    * **Mathematical Risk Scoring (Weighted Fusion):** Replaces brittle boolean thresholds (if/else) with a normalized equation. Sensors (Vision, Thermal, Flame, MQ135) are scored from 0.0 to 1.0, multiplied by tuned architectural weights, and combined into a fluid Risk Score.
+    * **Mathematical Risk Scoring (Weighted Fusion):** Replaces brittle boolean thresholds (if/else) with a normalized equation. Sensors (Vision, Thermal, Flame, MQ135) are scored from ```0.0``` to ```1.0```, multiplied by tuned architectural weights, and combined into a fluid Risk Score.
     * **Thermal Rate of Rise (RoR) Calculus:** Tracks spatial and temporal temperature changes ($\frac{dT}{dt}$). It calculates the derivative of the thermal grid to detect dangerous temperature spikes (e.g., >2.0°C per second), preventing reliance solely on absolute temperature limits.
-    * **Intelligent Noise Flooring:** Uses configuration constants (VISION_FIRE_CONF, etc.) as hard noise floors to mathematically zero-out sensor drift and low-confidence visual artifacts before they enter the fusion engine.
+    * **Intelligent Noise Flooring:** Uses configuration constants (```VISION_FIRE_CONF```, etc.) as hard noise floors to mathematically zero-out sensor drift and low-confidence visual artifacts before they enter the fusion engine.
 3. State-Driven Alert Lifecycle (```alert_loop.py``` & ```alert_state.py```)
-    * **Alert State Machine:** Transitions threats through a strict lifecycle: NEW -> ACTIVE -> RESOLVED.
-    * **Persistence Windowing:** Requires a threat to maintain a high fusion score for a continuous duration (PERSISTENCE_SECONDS) before promoting it to ACTIVE, mathematically eliminating transient false positives (like a passing lighter).
-    * **Dynamic Severity Scaling:** Automatically categorizes incidents into LOW, MEDIUM, or HIGH severity bands based directly on the fused mathematical risk score.
-    * **Asynchronous Evaluation Loop:** Runs the fusion engine continuously in the background via FastAPI's lifespan context manager, completely decoupled from frontend API requests.
+    * **Alert State Machine:** Transitions threats through a strict lifecycle: ```NEW``` -> ```ACTIVE``` -> ```RESOLVED```.
+    * **Persistence Windowing:** Requires a threat to maintain a high fusion score for a continuous duration (```PERSISTENCE_SECONDS```) before promoting it to ```ACTIVE```, mathematically eliminating transient false positives (like a passing lighter).
+    * **Dynamic Severity Scaling:** Automatically categorizes incidents into ```LOW```, ```MEDIUM```, or ```HIGH``` severity bands based directly on the fused mathematical risk score.
+    * **Asynchronous Evaluation Loop:** Runs the fusion engine continuously in the background via FastAPI's ```lifespan``` context manager, completely decoupled from frontend API requests.
 4. Evidence Capture & Data Persistence (alert_store.py)
     * **Zero-Latency Evidence Snapshots:** Reaches into the active OpenCV frame buffer the exact millisecond a high-risk event triggers, saving a high-fidelity JPEG to the local filesystem without interrupting the live stream.
-    * **SQLite Event Upserting:** Uses ON CONFLICT (id) DO UPDATE to efficiently mutate live alerts in the database (updating severity, confidence, and timestamps) without creating duplicate records.
-    * **Automated CSV Incident Export:** Dynamically queries the SQLite history and generates a downloadable CSV report in memory (io.StringIO) for enterprise audit logging.
+    * **SQLite Event Upserting:** Uses ```ON CONFLICT (id) DO UPDATE``` to efficiently mutate live alerts in the database (updating severity, confidence, and timestamps) without creating duplicate records.
+    * **Automated CSV Incident Export:** Dynamically queries the SQLite history and generates a downloadable CSV report in memory (```io.StringIO```) for enterprise audit logging.
 5. Enterprise Security & Authentication (```login.py```)
     * **OAuth2 / JWT Architecture:** Secures all system endpoints using JSON Web Tokens (JWT) with configurable expiration windows.
-    * **Cryptographic Password Hashing:** Secures admin credentials using bcrypt salting and hashing, ensuring plaintext passwords never touch the database.
+    * **Cryptographic Password Hashing:** Secures admin credentials using ```bcrypt``` salting and hashing, ensuring plaintext passwords never touch the database.
     * **Query-Parameter Media Authorization:** Protects static media assets (live video feeds and saved snapshot JPEGs) by parsing and validating JWTs directly from URL query parameters.
 6. Real-Time React Dashboard (```App.jsx```)
     * **Dynamic Thermal Rendering:** Parses 64-point floating array data and renders an interpolated, color-mapped 8x8 heat grid with fixed ambient-to-fire temperature scales.
