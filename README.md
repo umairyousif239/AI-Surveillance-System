@@ -2,6 +2,18 @@
 
 This project is made in accordance to the completion of my computer science degree at Shah Abdul Latif University, Khairpur. This project is based on the YOLOv8 model combined with sensors like AMG8833, Flame IR Sensor and MQ-135 for the detection of threats, Smoke, Fire and Weapons. Furthermore, This project will be optimized to run on a Raspberry Pi 5 to serve as personal surveillance system.
 
+## Features:
+1. Edge AI & Computer Vision (```vision.py```)
+    * NCNN-Optimized Object Detection: Utilizes a quantized YOLOv8 model running via the NCNN framework, specifically tuned for high-speed edge inference on    ARM-based hardware (like the Raspberry Pi).
+    * Multi-Class Threat Extraction: Independently identifies, tracks, and scores confidence levels for both "Fire" and "Smoke" classes simultaneously.
+    * Asynchronous Video Processing: Employs a dedicated background capture thread (```capture_loop```) isolated with ```threading.Lock()``` to ensure heavy AI inference does not 
+    * Live MJPEG Streaming: Converts annotated OpenCV frames into a low-latency MJPEG byte stream, allowing real-time video monitoring in the browser.
+2. Continuous Multi-Sensor Data Fusion (```alert_engine.py```)
+3. State-Driven Alert Lifecycle (```alert_loop.py``` & ```alert_state.py```)
+4. Evidence Capture & Data Persistence (alert_store.py)
+5. Enterprise Security & Authentication (```login.py```)
+6. Real-Time React Dashboard (```App.jsx```)
+
 ## File Structure:
 ```/Models```: houses all the trained models (both pytorch versions and the ONNX versions).
 
@@ -36,10 +48,10 @@ npm run dev
 - [x] Combine the camera and sensor data as a proper backend.
 - [x] Add in a proper database for alerts and data storage.
 - [x] Create a front end to show all the sensor data and camera input in a single clean dashboard.
-- [ ] Have the frontend show visuals from the camera and the thermal sensor.
-- [ ] Fix the vision detection issue where the detections don't appear on the frontend.
-- [ ] Fix the where the history doesn't appear on the frontend.
-- [ ] Add Authentication to the project
+- [x] Have the frontend show visuals from the camera and the thermal sensor.
+- [x] Fix the vision detection issue where the detections don't appear on the frontend.
+- [x] Fix the where the history doesn't appear on the frontend.
+- [x] Add Authentication to the project
 - [ ] Dockerize the whole project.
 - [ ] Optimize and host the project onto a Raspberry pi 5.
 
