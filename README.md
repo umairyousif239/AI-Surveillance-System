@@ -6,7 +6,7 @@ This project is made in accordance to the completion of my computer science degr
 1. **Edge AI & Computer Vision (```vision.py```)**
     * **NCNN-Optimized Object Detection:** Utilizes a quantized YOLOv8 model running via the NCNN framework, specifically tuned for high-speed edge inference on ARM-based hardware (like the Raspberry Pi).
     * **Multi-Class Threat Extraction:** Independently identifies, tracks, and scores confidence levels for both "Fire" and "Smoke" classes simultaneously.
-    * **Asynchronous Video Processing:** Employs a dedicated background capture thread (```capture_loop```) isolated with ```threading.Lock()``` to ensure heavy AI inference does not 
+    * **Asynchronous Video Processing:** Employs a dedicated background capture thread (```capture_loop```) isolated with ```threading.Lock()``` to ensure heavy AI inference does not bottleneck the web server or drop camera frames.
     * **Live MJPEG Streaming:** Converts annotated OpenCV frames into a low-latency MJPEG byte stream, allowing real-time video monitoring in the browser.
 2. **Continuous Multi-Sensor Data Fusion (```alert_engine.py```)**
     * **Mathematical Risk Scoring (Weighted Fusion):** Replaces brittle boolean thresholds (if/else) with a normalized equation. Sensors (Vision, Thermal, Flame, MQ135) are scored from ```0.0``` to ```1.0```, multiplied by tuned architectural weights, and combined into a fluid Risk Score.
