@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
 
-from backend.api.vision import router as vision_router
+# IMPORTANT: We now import the process managers from vision
+from backend.api.vision import router as vision_router, start_vision, stop_vision
 from backend.api.alerts import router as alerts_router
 from backend.api.sensors import router as sensors_router
 from backend.api.login import router as auth_router, get_password_hash
@@ -15,19 +16,24 @@ from backend.modules.alert_loop import alert_loop
 async def lifespan(app: FastAPI):
     # Auth Database Startup
     init_auth_db()
-    # seed the admin account if it already doesnt exist
     hashed_pw = get_password_hash("fyp2026")
     create_user_in_db("admin", hashed_pw)
     print("Auth Database initialized")
-    # Surveillance Startup
+    
+    # 1. Start the isolated YOLO Multiprocessing Engine
+    start_vision()
+    print("✅ Vision AI Multiprocessing Engine started")
+
+    # 2. Start the Alert Fusion loop
     task = asyncio.create_task(alert_loop())
     print("✅ Alert evaluation loop started")
 
-    yield  # App runs here
+    yield  # FastAPI Server handles web traffic here
 
-    # Shutdown (optional cleanup)
+    # Shutdown Sequence (Zombie Process Prevention)
     task.cancel()
-    print("🛑 Shutting down backend")
+    stop_vision()
+    print("🛑 Shutting down backend safely")
 
 app = FastAPI(
     title="AI Surveillance Backend",
@@ -41,30 +47,23 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "http://localhost",       # <-- Capacitor Android Origin
-        "capacitor://localhost"   # <-- Capacitor iOS Origin (for later)
+        "http://localhost",       
+        "capacitor://localhost"   
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Usage of login API
+
 app.include_router(auth_router)
-
-# Usage of vision API
 app.include_router(vision_router)
-
-# Usage of Sensor ingestion (ESP32 → backend) API
 app.include_router(sensors_router)
-
-# Usage of Alert evaluation & retrieval API
 app.include_router(alerts_router)
 
-# Health Check
 @app.get("/")
 def root():
     return {
         "status": "running",
         "services": ["vision", "sensors", "alerts"],
-        "alerts_mode": "background"
+        "architecture": "multiprocessing"
     }
