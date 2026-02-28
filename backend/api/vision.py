@@ -2,21 +2,21 @@ import cv2
 import time
 import asyncio
 import numpy as np
+import os
 from multiprocessing import Process, Manager, shared_memory
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from backend.api.login import get_current_user, get_current_user_from_query
 
-# --- Shared Memory Configurations ---
-# We must lock the resolution so the RAM allocation byte-size is perfectly static
+# --- Shared Memory Configurations (720p) ---
 FRAME_WIDTH = 1280
 FRAME_HEIGHT = 720
 FRAME_CHANNELS = 3
 FRAME_BYTES = FRAME_WIDTH * FRAME_HEIGHT * FRAME_CHANNELS
 SHM_NAME = "vision_frame_shm"
 
-# --- Global IPC Variables for FastAPI ---
+# --- Global IPC Variables ---
 vision_manager = None
 shared_dict = None
 frame_lock = None
@@ -27,22 +27,27 @@ shm_read = None
 # PROCESS 2: THE ISOLATED YOLO WORKER
 # ==========================================
 def capture_loop(shared_dict, lock):
-    """This runs on a completely separate CPU core with its own Python GIL"""
+    """Isolated process to handle camera and AI inference"""
     
-    # IMPORTANT: The model MUST be imported and loaded inside the child process
+    # Core Pinning: Move this process to Core 3 immediately
+    try:
+        os.sched_setaffinity(0, {3}) 
+        print("DEBUG: YOLO Process successfully pinned to CPU Core 3")
+    except Exception as e:
+        print(f"DEBUG: Core pinning failed (usually requires Linux): {e}")
+
     from ultralytics import YOLO
     model = YOLO("models/yolov8n_ncnn_model", task="detect")
     IMG_SIZE = 256
     CONF_THRESH = 0.25
 
-    # 1. Allocate the physical RAM block
+    # Allocate Shared Memory
     try:
         shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=FRAME_BYTES)
     except FileExistsError:
         shm = shared_memory.SharedMemory(name=SHM_NAME, create=False)
 
-    cap = cv2.VideoCapture(0)
-    # Force camera to match our exact memory allocation
+    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
@@ -59,20 +64,18 @@ def capture_loop(shared_dict, lock):
                 time.sleep(0.01)
                 continue
 
-            # Ensure strict frame size for memory byte alignment
             frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT))
-            detections = []
-
+            
             try:
                 results = model.predict(frame, imgsz=IMG_SIZE, conf=CONF_THRESH, device="cpu", verbose=False)
                 r = results[0]
+                detections = []
 
                 if r.boxes is not None:
                     for box in r.boxes:
                         cls_id = int(box.cls[0])
                         conf = float(box.conf[0])
                         x1, y1, x2, y2 = map(int, box.xyxy[0])
-
                         detections.append({
                             "class": model.names[cls_id],
                             "confidence": round(conf, 3),
@@ -80,20 +83,16 @@ def capture_loop(shared_dict, lock):
                         })
 
                 annotated_frame = r.plot()
-
-            except Exception as e:
-                print("Inference failed:", e)
+            except Exception:
                 annotated_frame = frame
 
-            frame_id = (frame_id + 1) % 1_000_000
-            
+            # Calculate FPS for the overlay
             curr_time = time.time()
             fps = 1 / max(curr_time - prev_time, 1e-5)
             prev_time = curr_time
+            cv2.putText(annotated_frame, f"FPS: {fps:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
 
-            cv2.putText(annotated_frame, f"FPS: {fps:.1f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-
-            # 2. Safely push the JSON data to FastAPI using the IPC Manager
+            # Update shared dictionary for API
             with lock:
                 shared_dict["latest_detections"] = {
                     "frame_id": frame_id,
@@ -101,17 +100,13 @@ def capture_loop(shared_dict, lock):
                     "detections": detections
                 }
             
-            # 3. Dump the raw Numpy bytes directly into the Shared Memory RAM block
+            # Zero-Copy Write to Shared Memory
             shm.buf[:FRAME_BYTES] = annotated_frame.tobytes()
+            frame_id = (frame_id + 1) % 1_000_000
 
     finally:
-        # Prevent Zombie processes and memory leaks
         cap.release()
         shm.close()
-        try:
-            shm.unlink()
-        except:
-            pass
 
 # ==========================================
 # PROCESS 1: FASTAPI LIFECYCLE MANAGERS
@@ -119,13 +114,12 @@ def capture_loop(shared_dict, lock):
 def start_vision():
     global vision_manager, shared_dict, frame_lock, vision_process, shm_read
     
-    # Spin up the IPC (Inter-Process Communication) tools
     vision_manager = Manager()
     shared_dict = vision_manager.dict()
     shared_dict["latest_detections"] = None
     frame_lock = vision_manager.Lock()
 
-    # Hunt down and destroy any ghost memory from a previous crash
+    # Clear stale memory from previous crashes
     try:
         temp_shm = shared_memory.SharedMemory(name=SHM_NAME)
         temp_shm.close()
@@ -133,20 +127,26 @@ def start_vision():
     except FileNotFoundError:
         pass
 
-    # Launch YOLO on a new CPU core
     vision_process = Process(target=capture_loop, args=(shared_dict, frame_lock), daemon=True)
     vision_process.start()
 
-    # Wait 2 seconds for YOLO to create the memory block, then connect FastAPI to it
-    time.sleep(2)
-    try:
-        shm_read = shared_memory.SharedMemory(name=SHM_NAME, create=False)
-    except Exception as e:
-        print("Warning: Could not connect to Shared Memory on start:", e)
+    # Retry connection to Shared Memory (Wait for YOLO to boot)
+    connected = False
+    for i in range(15): 
+        try:
+            time.sleep(1)
+            shm_read = shared_memory.SharedMemory(name=SHM_NAME, create=False)
+            connected = True
+            print(f"✅ FastAPI connected to Shared Memory on attempt {i+1}")
+            break
+        except FileNotFoundError:
+            print(f"Waiting for YOLO... (Attempt {i+1}/15)")
+    
+    if not connected:
+        print("❌ CRITICAL: Shared Memory connection failed.")
 
 def stop_vision():
     global vision_process, shm_read, vision_manager
-    print("🛑 Terminating YOLO process...")
     if vision_process and vision_process.is_alive():
         vision_process.terminate()
         vision_process.join()
@@ -156,14 +156,20 @@ def stop_vision():
         vision_manager.shutdown()
 
 def get_current_frame():
-    """Reads the raw bytes from RAM and reconstructs the image for FastAPI"""
+    """Reads raw bytes from RAM. Returns a View, not a Copy."""
+    global shm_read
     if not shm_read:
         return None
-    frame_data = np.ndarray((FRAME_HEIGHT, FRAME_WIDTH, FRAME_CHANNELS), dtype=np.uint8, buffer=shm_read.buf)
-    return frame_data.copy()
+    try:
+        # Create a zero-copy numpy view of the shared memory buffer
+        return np.ndarray((FRAME_HEIGHT, FRAME_WIDTH, FRAME_CHANNELS), dtype=np.uint8, buffer=shm_read.buf)
+    except:
+        return None
 
 def get_snapshot_frame():
-    return get_current_frame()
+    # Snapshots DO need a copy to prevent the next frame from overwriting it
+    frame = get_current_frame()
+    return frame.copy() if frame is not None else None
 
 # ==========================================
 # FASTAPI ROUTER & ENDPOINTS
@@ -174,17 +180,19 @@ async def mjpeg_generator():
     while True:
         frame = get_current_frame()
         if frame is None:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
             continue
 
-        ret, buffer = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+        # Reduce JPEG quality to 50 for smoother 720p streaming on Pi
+        ret, buffer = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
         if not ret:
             await asyncio.sleep(0.01)
             continue
         
-        jpg_bytes = buffer.tobytes()
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + jpg_bytes + b'\r\n')
-        await asyncio.sleep(0.03)
+        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+        
+        # Cap stream to ~25 FPS to reduce Network I/O spikes
+        await asyncio.sleep(0.04)
 
 @router.get("/video_feed")
 async def video_feed(username: str = Depends(get_current_user_from_query)):
@@ -193,28 +201,18 @@ async def video_feed(username: str = Depends(get_current_user_from_query)):
 @router.get("/latest", dependencies=[Depends(get_current_user)])
 def get_latest():
     with frame_lock:
-        detections_data = shared_dict.get("latest_detections")
+        data = shared_dict.get("latest_detections")
 
-    if detections_data is None:
-        return {
-            "detected": False,
-            "fire_confidence": 0.0,
-            "smoke_confidence": 0.0,
-            "timestamp": None
-        }
+    if not data:
+        return {"detected": False, "fire_confidence": 0.0, "smoke_confidence": 0.0, "timestamp": None}
 
-    detections = detections_data["detections"]
-    timestamp = detections_data["timestamp_ms"]
-    
-    fire = [d for d in detections if d["class"].lower() == "fire"]
-    smoke = [d for d in detections if d["class"].lower() == "smoke"]
-    
-    fire_conf = max([d["confidence"] for d in fire], default=0.0)
-    smoke_conf = max([d["confidence"] for d in smoke], default=0.0)
+    detections = data["detections"]
+    fire_conf = max([d["confidence"] for d in detections if d["class"].lower() == "fire"], default=0.0)
+    smoke_conf = max([d["confidence"] for d in detections if d["class"].lower() == "smoke"], default=0.0)
 
     return {
         "detected": (fire_conf > 0 or smoke_conf > 0),
         "fire_confidence": fire_conf,
         "smoke_confidence": smoke_conf,
-        "timestamp": timestamp
+        "timestamp": data["timestamp_ms"]
     }
