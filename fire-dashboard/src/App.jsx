@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const IP = import.meta.env.VITE_IP_ADDR || "127.0.0.1";
 const API = `http://${IP}:8000`;
@@ -18,6 +18,58 @@ const STATUS_COLORS = {
 };
 
 const ALERT_ACTIVE_STATES = ["NEW", "ACTIVE", "AlertStatus.NEW", "AlertStatus.ACTIVE"];
+
+/* ================= WEB AUDIO API SIREN ================= */
+// Generates a harsh, hardware-style alarm mathematically. Zero dependencies.
+const SirenAlarm = {
+  ctx: null,
+  oscillator: null,
+  gainNode: null,
+  interval: null,
+
+  play() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
+    
+    // Stop any existing siren before starting a new one
+    this.stop();
+
+    this.oscillator = this.ctx.createOscillator();
+    this.gainNode = this.ctx.createGain();
+
+    this.oscillator.type = "square"; // Harsh, piercing sound
+    this.oscillator.connect(this.gainNode);
+    this.gainNode.connect(this.ctx.destination);
+
+    this.oscillator.start();
+
+    // Modulate the frequency to create a "wailing" effect
+    let high = true;
+    this.interval = setInterval(() => {
+      if (this.ctx && this.oscillator) {
+        this.oscillator.frequency.setTargetAtTime(high ? 1000 : 600, this.ctx.currentTime, 0.1);
+        high = !high;
+      }
+    }, 400); // Switches pitch every 400ms
+  },
+
+  stop() {
+    if (this.interval) clearInterval(this.interval);
+    if (this.oscillator) {
+      try { this.oscillator.stop(); } catch (e) {}
+      this.oscillator.disconnect();
+      this.oscillator = null;
+    }
+    if (this.gainNode) {
+      this.gainNode.disconnect();
+      this.gainNode = null;
+    }
+  }
+};
 
 /* ================= CARD COMPONENT ================= */
 
@@ -208,6 +260,10 @@ export default function App() {
   const [alert, setAlert] = useState(null);
   const [history, setHistory] = useState([]);
 
+  // --- Notification & Alarm State ---
+  const [isRinging, setIsRinging] = useState(false);
+  const lastAlertIdRef = useRef(null);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
@@ -233,6 +289,14 @@ export default function App() {
     }
   };
 
+  // Ask for notification permissions once on load
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Main Data Fetching Loop
   useEffect(() => {
     if (!token) return;
 
@@ -263,6 +327,52 @@ export default function App() {
     return () => clearInterval(interval);
   }, [token]);
 
+  // Alarm & Notification Watcher
+  useEffect(() => {
+    if (!alert) return;
+
+    const isActive = ALERT_ACTIVE_STATES.includes(alert.status);
+    const isNewThreat = isActive && alert.id !== lastAlertIdRef.current;
+
+    if (isNewThreat) {
+      lastAlertIdRef.current = alert.id;
+
+      // 1. Push Notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(`🚨 ${alert.severity} ALERT: ${alert.type}`, {
+          body: `Confidence: ${alert.confidence}% \nLocation: Node 1`,
+          icon: '/favicon.ico',
+          vibrate: [200, 100, 200, 100, 200], // Android vibration
+          requireInteraction: true 
+        });
+      }
+
+      // 2. Sound Siren for Medium/High
+      if (alert.severity === 'MEDIUM' || alert.severity === 'HIGH') {
+        try {
+          SirenAlarm.play();
+          setIsRinging(true);
+        } catch (e) {
+          console.warn("Browser blocked audio. User interaction required first.", e);
+        }
+      }
+    } else if (!isActive && isRinging) {
+      // Auto-silence if threat is resolved on backend
+      SirenAlarm.stop();
+      setIsRinging(false);
+    }
+
+    // Cleanup siren if component unmounts
+    return () => {
+      if (!isActive) SirenAlarm.stop();
+    };
+  }, [alert, isRinging]);
+
+  const handleSilenceAlarm = () => {
+    SirenAlarm.stop();
+    setIsRinging(false);
+  };
+
   if (!token) {
     return <Login setToken={setToken} />;
   }
@@ -270,11 +380,10 @@ export default function App() {
   // --- UI Derived State ---
   const fireConf = vision?.fire_confidence || 0;
   const smokeConf = vision?.smoke_confidence || 0;
-  const fireActive = vision?.detected;
   const alertActive = ALERT_ACTIVE_STATES.includes(alert?.status);
 
   let visionStatusText = "Detection: None";
-  let visionStatusColor = "text-gray-400"; // Fixed typo from 'text-grey-400'
+  let visionStatusColor = "text-gray-400"; 
 
   if (fireConf > 0 && smokeConf > 0) {
     visionStatusText = "🔥 Fire & 💨 Smoke Detected!";
@@ -341,12 +450,12 @@ export default function App() {
         {/* CURRENT ALERT */}
         <Card
           title="Current Alert"
-          className={alertActive ? "border-2 border-red-600 animate-pulse" : ""}
+          className={alertActive ? "border-2 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]" : ""}
         >
           {alertActive && alert ? (
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <p>Status: <span className="font-bold text-red-400">{alert.status}</span></p>
+                <p>Status: <span className="font-bold text-red-400 animate-pulse">{alert.status}</span></p>
                 {alert.severity && (
                   <span className={`text-xs px-2 py-1 rounded font-bold ${
                     alert.severity === 'HIGH' ? 'bg-red-900 text-red-200' : 
@@ -381,6 +490,17 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* SILENCE ALARM BUTTON */}
+              {isRinging && (
+                <button
+                  onClick={handleSilenceAlarm}
+                  className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg transition-colors border-2 border-red-400"
+                >
+                  🔕 SILENCE ALARM
+                </button>
+              )}
+
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500 pb-4">
