@@ -369,10 +369,11 @@ export default function App() {
   useEffect(() => {
     if (!alert) return;
 
-    const isActive = ALERT_ACTIVE_STATES.includes(alert.status);
-    const isNewThreat = isActive && alert.id !== lastAlertIdRef.current;
+    // ONLY trigger the alarm and notification if the status has officially been promoted to ACTIVE
+    const isStrictlyActive = alert.status === "ACTIVE" || alert.status === "AlertStatus.ACTIVE";
+    const isNewActiveThreat = isStrictlyActive && alert.id !== lastAlertIdRef.current;
 
-    if (isNewThreat) {
+    if (isNewActiveThreat) {
       lastAlertIdRef.current = alert.id;
 
       // 1. Build the dynamic triggers string
@@ -401,7 +402,7 @@ export default function App() {
         }]
       }).catch(err => console.warn("Local notification failed", err));
 
-      // 3. Play Web Audio Oscillator
+      // 4. Play Web Audio Oscillator
       if (alert.severity === 'MEDIUM' || alert.severity === 'HIGH') {
         try {
           SirenAlarm.play();
@@ -410,13 +411,16 @@ export default function App() {
           console.warn("Browser blocked audio. User interaction required first.", e);
         }
       }
-    } else if (!isActive && isRinging) {
+    } else if (!ALERT_ACTIVE_STATES.includes(alert.status) && isRinging) {
+      // Auto-silence if threat is completely RESOLVED
       SirenAlarm.stop();
       setIsRinging(false);
     }
 
     return () => {
-      if (!isActive) SirenAlarm.stop();
+      // Safety cleanup if the component unmounts while actively ringing
+      const stillActive = ALERT_ACTIVE_STATES.includes(alert?.status);
+      if (!stillActive) SirenAlarm.stop();
     };
   }, [alert, isRinging]);
 
