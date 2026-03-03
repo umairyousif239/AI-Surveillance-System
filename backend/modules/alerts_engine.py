@@ -102,8 +102,8 @@ def evaluate_alerts() -> Optional[dict]:
         
         if time_diff > 0:
             rate_of_rise = dt / time_diff
-            # Must spike >5.0°C/s AND the room must already be unnaturally warm (>35°C)
-            if rate_of_rise > 5.0 and max_temp > 35.0:
+            # Must spike >8.0°C/s AND the room must already be unnaturally warm (>35°C)
+            if rate_of_rise > 8.0 and max_temp > 35.0:
                 thermal_ror = True
                 print(f"Rate of Rise SPIKE DETECTED: +{rate_of_rise:.1f}°C/s")
                 
