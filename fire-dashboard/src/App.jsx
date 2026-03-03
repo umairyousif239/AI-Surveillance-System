@@ -137,7 +137,7 @@ function ThermalGrid({ data }) {
   if (!data || data.length !== 64) return <p>No thermal data</p>;
 
   const MIN_TEMP = 20; 
-  const MAX_TEMP = 50; 
+  const MAX_TEMP = 60; 
 
   const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
   const normalize = (value) => {
@@ -389,7 +389,7 @@ export default function App() {
         if (alert.signals.vision_fire) activeTriggers.push("Vision AI");
         if (alert.signals.smoke) activeTriggers.push("Smoke");
         if (alert.signals.flame) activeTriggers.push("IR Flame");
-        if (alert.signals.max_temp >= 50 || alert.signals.delta_temp >= 15) activeTriggers.push("Thermal Spike");
+        if (alert.signals.max_temp >= 60 || alert.signals.delta_temp >= 15) activeTriggers.push("Thermal Spike");
         if (alert.signals.thermal_ror) activeTriggers.push("Heat Spike");
         if (alert.signals.mq135_raw >= 240) activeTriggers.push("Dangerous Gas/VOCs");
       }
@@ -544,7 +544,7 @@ export default function App() {
                     {alert.signals.vision_fire && <span className="bg-gray-700 px-2 py-1 rounded text-red-300">📸 Vision AI</span>}
                     {alert.signals.smoke && <span className="bg-gray-700 px-2 py-1 rounded text-gray-300">💨 Smoke</span>}
                     {alert.signals.flame && <span className="bg-gray-700 px-2 py-1 rounded text-orange-300">🔥 IR Flame</span>}
-                    {(alert.signals.max_temp >= 50 || alert.signals.delta_temp >= 15) && 
+                    {(alert.signals.max_temp >= 60 || alert.signals.delta_temp >= 15) && 
                       <span className="bg-gray-700 px-2 py-1 rounded text-pink-300">🌡️ Thermal Spike</span>
                     }
                     {alert.signals.thermal_ror &&
