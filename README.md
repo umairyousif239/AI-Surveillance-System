@@ -7,6 +7,7 @@ The system transitions traditional surveillance from passive recording to active
 Built with a "Privacy-First" philosophy, the entire architecture operates at the **Edge**, ensuring zero reliance on third-party cloud infrastructure or external internet connectivity.
 
 ## Features:
+
 ### 1. Core Intelligence & Processing
 * **Edge-Based AI Inference:** Utilizes a custom-trained YOLOv8 model optimized via the **NCNN framework** to detect fire and smoke locally on a Raspberry Pi 5 without cloud dependency.
 * **Mathematical Fusion Engine:** A decoupled background loop that calculates a normalized **Risk Score** by cross-referencing AI vision data with physical sensor telemetry to reduce false positives.
@@ -15,6 +16,7 @@ Built with a "Privacy-First" philosophy, the entire architecture operates at the
     <div align="center">
     <img src="./repo_resources/images/alert_state_diagram.png" alt="Alert State" width="600">
     </div>
+
 ### 2. Hardware & Connectivity
 * **Multi-Modal Sensor Array:** Integrates an **AMG8833** thermal camera, **MQ-135** gas/smoke sensor, and **Flame IR** sensor for secondary hardware validation of visual threats.
 * **Hardwired Serial USB Bridge:** Connects the ESP32 sensor manager to the Raspberry Pi 5 via USB to eliminate wireless latency or interference during an emergency.
@@ -22,6 +24,7 @@ Built with a "Privacy-First" philosophy, the entire architecture operates at the
     <div align="center">
     <img src="./repo_resources/images/system_architecture_diagram.png" alt="System Architecture" width="600">
     </div>
+
 ### 3. Software & Security
 * **Asynchronous Vision Pipeline:** Employs Python's multiprocessing and shared memory to isolate heavy AI math from the web server, maintaining a fluid 25 to 30 FPS camera feed.
 * **Token-Based Authentication (JWT):** Secures all REST APIs, evidence snapshots, and live video streams using **JSON Web Tokens** and **bcrypt** password hashing.
@@ -33,6 +36,7 @@ Built with a "Privacy-First" philosophy, the entire architecture operates at the
     <img src="./repo_resources/images/database_schema.png" alt="Database Schema" width="600">
     </div>
 * **Containerized Microservices:** The entire software stack is deployed via **Docker**, ensuring environment isolation and easy portability across different hardware.
+
 ### 4. User Interface & Monitoring
 * **Real-Time React Web Dashboard:** A high-contrast dark-mode interface featuring dynamic thermal grid color-mapping, live MJPEG streaming, and interactive alert history.
     <div align="center">
@@ -120,6 +124,16 @@ Note: Docker automatically handles hardware passthrough for ```/dev/video0``` an
 - [x] Add Authentication to the project
 - [x] Dockerize the whole project.
 - [x] Optimize and host the project onto a Raspberry pi 5.
+
+## ⚖️ License
+
+This project is licensed under the **GNU General Public License v3.0**. 
+
+[cite_start]**Note for users:** This project was developed as a Bachelor's Thesis at **Shah Abdul Latif University**[cite: 4]. While you are encouraged to use and modify the code for educational and open-source purposes, any derivative works must remain open-source under the same license. [cite_start]Commercial use is restricted by the underlying YOLOv8 licensing terms.
+
+## ⚠️ Disclaimer
+
+This system is a **university prototype** developed for research and educational purposes as part of a Bachelor's Thesis. While it demonstrates high accuracy in controlled environments, it is **not** a certified industrial safety device or a replacement for professional fire alarms and life-safety systems. Use of this software in real-world critical safety scenarios is at the user's own risk.
 
 ## Directory Structure:
 ```
