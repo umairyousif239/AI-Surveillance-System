@@ -8,7 +8,9 @@ This project is made in accordance to the completion of my computer science degr
 * **Mathematical Fusion Engine:** A decoupled background loop that calculates a normalized **Risk Score** by cross-referencing AI vision data with physical sensor telemetry to reduce false positives.
 * **Thermal Rate of Rise (RoR) Calculation:** Monitors how fast temperature spikes per second rather than waiting for an absolute heat threshold, allowing for faster ```Flash Fire``` detection.
 * **State-Driven Alert Lifecycle Manager:** Transitions threats through strict **NEW**, **ACTIVE**, and **RESOLVED** phases using ```persistence windowing``` to verify hazards over time.
-![Alert State](./repo_resources/images/alert_state_diagram.png)
+    <div align="center">
+    <img src="./repo_resources/images/alert_state_diagram.png" alt="Alert State" width="600">
+    </div>
 ### 2. Hardware & Connectivity
 * **Multi-Modal Sensor Array:** Integrates an **AMG8833** thermal camera, **MQ-135** gas/smoke sensor, and **Flame IR** sensor for secondary hardware validation of visual threats.
 * **Hardwired Serial USB Bridge:** Connects the ESP32 sensor manager to the Raspberry Pi 5 via USB to eliminate wireless latency or interference during an emergency.
@@ -19,13 +21,19 @@ This project is made in accordance to the completion of my computer science degr
 ### 3. Software & Security
 * **Asynchronous Vision Pipeline:** Employs Python's multiprocessing and shared memory to isolate heavy AI math from the web server, maintaining a fluid 25 to 30 FPS camera feed.
 * **Token-Based Authentication (JWT):** Secures all REST APIs, evidence snapshots, and live video streams using **JSON Web Tokens** and **bcrypt** password hashing.
-![UML Structure](./repo_resources/images/uml_sequence_diagram.png)
+    <div align="center">
+    <img src="./repo_resources/images/uml_sequence_diagram.png" alt="UML Structure" width="600">
+    </div>
 * **Dual SQLite Database Architecture:** Uses separate, lightweight databases for secure user authentication (**auth.db**) and persistent, high-efficiency event logging (**alerts.db**).
-![Database Schema](./repo_resources/images/database_schema.png)
+    <div align="center">
+    <img src="./repo_resources/images/database_schema.png" alt="Database Schema" width="600">
+    </div>
 * **Containerized Microservices:** The entire software stack is deployed via **Docker**, ensuring environment isolation and easy portability across different hardware.
 ### 4. User Interface & Monitoring
 * **Real-Time React Web Dashboard:** A high-contrast dark-mode interface featuring dynamic thermal grid color-mapping, live MJPEG streaming, and interactive alert history.
-![User Interface](./repo_resources/images/user_interface.jpg)
+    <div align="center">
+    <img src="./repo_resources/images/user_interface.jpg" alt="User Interface" width="600">
+    </div>
 * **Hybrid Android Mobile Application:** A Capacitor-powered application that provides mobile monitoring, remote push notifications, and evidence retrieval over the local network.
 * **Low-Latency Evidence Capture:** Automatically captures high-fidelity visual snapshots with bounding box overlays the moment an alert becomes ```ACTIVE``` for later audit.
 * **Client-Side CSV Export:** Allows administrators to generate and download structured incident reports directly from the browser for record-keeping.
