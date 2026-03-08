@@ -1,5 +1,4 @@
 # Autonomous Edge Surveillance: Multi-Modal Hazard Detection via Computer Vision and Sensor Fusion
-
 This project was developed as a Final Year Project (FYP) for the completion of a **Bachelor's Degree in Computer Science** at **Shah Abdul Latif University, Khairpur**.
 
 The system transitions traditional surveillance from passive recording to active hazard response by deploying a locally optimized **YOLOv8** model on a **Raspberry Pi 5** . To eliminate the high false-positive rates typical of vision-only systems, this visual intelligence is mathematically fused with a hardware sensor array—including an **AMG8833 thermal camera**, **MQ-135 gas sensor**, and **Flame IR sensor**—to detect fire, smoke, and gas leaks in real-time.
@@ -7,7 +6,6 @@ The system transitions traditional surveillance from passive recording to active
 Built with a "Privacy-First" philosophy, the entire architecture operates at the **Edge**, ensuring zero reliance on third-party cloud infrastructure or external internet connectivity.
 
 ## Features:
-
 ### 1. Core Intelligence & Processing
 * **Edge-Based AI Inference:** Utilizes a custom-trained YOLOv8 model optimized via the **NCNN framework** to detect fire and smoke locally on a Raspberry Pi 5 without cloud dependency.
 * **Mathematical Fusion Engine:** A decoupled background loop that calculates a normalized **Risk Score** by cross-referencing AI vision data with physical sensor telemetry to reduce false positives.
@@ -126,10 +124,12 @@ Note: Docker automatically handles hardware passthrough for ```/dev/video0``` an
 - [x] Optimize and host the project onto a Raspberry pi 5.
 
 ## License
-
 This project is licensed under the **GNU General Public License v3.0**. 
 
 **Note for users:** This project was developed as a Bachelor's Thesis at **Shah Abdul Latif University**. While you are encouraged to use and modify the code for educational and open-source purposes, any derivative works must remain open-source under the same license. Commercial use is restricted by the underlying YOLOv8 licensing terms.
+
+## Disclaimer
+This system is a **university prototype** developed for research and educational purposes as part of a Bachelor's Thesis. While it demonstrates high accuracy in controlled environments, it is **not** a certified industrial safety device or a replacement for professional fire alarms and life-safety systems. Use of this software in real-world critical safety scenarios is at the user's own risk.
 
 ## How to Cite
 If you use this project, its underlying logic, or the research methodology in your own work, please cite it as follows:
@@ -149,10 +149,6 @@ If you use this project, its underlying logic, or the research methodology in yo
   note    = {Department of Computer Science}
 }
 ```
-
-## Disclaimer
-
-This system is a **university prototype** developed for research and educational purposes as part of a Bachelor's Thesis. While it demonstrates high accuracy in controlled environments, it is **not** a certified industrial safety device or a replacement for professional fire alarms and life-safety systems. Use of this software in real-world critical safety scenarios is at the user's own risk.
 
 ## Directory Structure:
 ```
