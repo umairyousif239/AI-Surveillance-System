@@ -125,13 +125,32 @@ Note: Docker automatically handles hardware passthrough for ```/dev/video0``` an
 - [x] Dockerize the whole project.
 - [x] Optimize and host the project onto a Raspberry pi 5.
 
-## ⚖️ License
+## License
 
 This project is licensed under the **GNU General Public License v3.0**. 
 
 **Note for users:** This project was developed as a Bachelor's Thesis at **Shah Abdul Latif University**. While you are encouraged to use and modify the code for educational and open-source purposes, any derivative works must remain open-source under the same license. Commercial use is restricted by the underlying YOLOv8 licensing terms.
 
-## ⚠️ Disclaimer
+## How to Cite
+If you use this project, its underlying logic, or the research methodology in your own work, please cite it as follows:
+
+### APA Style:
+    Bhatti, Umair Yousif. (2026). Autonomous Edge Surveillance: Multi-Modal Hazard Detection via Computer Vision and Sensor Fusion (Bachelor's Thesis). Shah Abdul Latif University, Khairpur (Shahdadkot Campus).
+
+### BibTeX:
+```
+@thesis{bhatti2026autonomousedgesurveillance,
+  author  = {Bhatti, Umair Yousif},
+  title   = {Autonomous Edge Surveillance: Multi-Modal Hazard Detection via Computer Vision and Sensor Fusion},
+  school  = {Shah Abdul Latif University, Khairpur},
+  year    = {2026},
+  address = {Shahdadkot Campus},
+  type    = {Bachelor's Thesis},
+  note    = {Department of Computer Science}
+}
+```
+
+## Disclaimer
 
 This system is a **university prototype** developed for research and educational purposes as part of a Bachelor's Thesis. While it demonstrates high accuracy in controlled environments, it is **not** a certified industrial safety device or a replacement for professional fire alarms and life-safety systems. Use of this software in real-world critical safety scenarios is at the user's own risk.
 
