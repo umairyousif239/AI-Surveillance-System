@@ -67,8 +67,8 @@ Before starting, ensure you have the following installed on your development mac
 ### 4. Backend & AI Engine Setup
 ```
 # Clone the repository
-git clone https://github.com/umairyousif239/AI-Surveillance-System.git
-cd AI-Surveillance-System
+git clone https://github.com/umairyousif239/Talos-SentinelF.git
+cd Talos-Sentinel
 
 # Create and activate virtual environment
 python -m venv venv
