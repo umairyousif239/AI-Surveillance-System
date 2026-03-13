@@ -6,13 +6,21 @@
     "claudeCode.environmentVariables": [
     {
         "name": "ANTHROPIC_BASE_URL",
-        "value": "http://localhost:11434" // Use your server's address/port
+        "value": "http://localhost:11434"
     },
     {
         "name": "ANTHROPIC_AUTH_TOKEN",
-        "value": "ollama" // Or "lmstudio" or a dummy value
+        "value": "ollama"
+    },
+    {
+        "name": "ANTHROPIC_API_KEY",
+        "value": ""
+    },
+    {
+        "name": "ANTHROPIC_API_MODEL",
+        "value": "qwen3.5:9b"
     }
     ],
-    "claudeCode.disableLoginPrompt": true
-
+    "claudeCode.disableLoginPrompt": true,
+    "claudeCode.selectedModel": "qwen3.5:9b"
 }
